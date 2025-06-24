@@ -16,11 +16,19 @@ This document consolidates all UI specifications for the MoodVibe app, providing
 - Quick emoji-based mood entry
 - Gallery moved to History screen
 
-### Version 3: Premium Design (Current Implementation)
+### Version 3: Premium Design
 - Enhanced components with glass morphism
 - Premium blue color scheme (#5D8AA8)
 - AI-powered insights and recommendations
 - Rich interactions and animations
+
+### Version 4: Clean Modern Design (Current Implementation - December 2024)
+- Pure white background (#FFFFFF)
+- Removed emoji grid from quick entry section
+- iPhone-style modal for mood entry with blur effect
+- Modern bottom navigation with blur and floating plus button
+- Mood gallery positioned directly after quick entry
+- Simplified, cleaner interface
 
 ## Current Design System
 
@@ -32,25 +40,30 @@ This document consolidates all UI specifications for the MoodVibe app, providing
 --primary-light: #6B98B6;        /* Light Blue */
 --primary-dark: #4F7C96;         /* Dark Blue */
 --accent-blue: #007AFF;          /* iOS System Blue */
+--white: #FFFFFF;                /* Pure White */
 ```
 
 #### Background Colors
 ```css
---bg-primary: #F2F2F7;           /* iOS System Gray 6 */
+--bg-primary: #FFFFFF;           /* Pure white (Updated) */
 --bg-secondary: #FFFFFF;         /* Pure white */
---bg-tertiary: #E5E5EA;         /* iOS System Gray 5 */
+--bg-tertiary: #F2F2F7;         /* iOS System Gray 6 */
+--bg-system-gray6: #F2F2F7;     /* Light gray for cards */
 ```
 
-#### Mood Gradients
-```javascript
-const moodGradients = {
-  happy: ['#FFD93D', '#FF6B6B'],      // Yellow to Pink
-  calm: ['#667EEA', '#764BA2'],       // Blue to Purple  
-  neutral: ['#A8EDEA', '#FED6E3'],    // Light Blue to Pink
-  sad: ['#4FACFE', '#00F2FE'],        // Blue gradient
-  excited: ['#FA709A', '#FEE140'],    // Pink to Yellow
-  anxious: ['#A8EDEA', '#FED6E3']     // Soft gradient
-};
+#### System Colors
+```css
+--label: #000000;                /* Primary text */
+--secondary-label: rgba(60, 60, 67, 0.6);
+--tertiary-label: rgba(60, 60, 67, 0.3);
+--placeholder: rgba(60, 60, 67, 0.3);
+--separator: #C6C6C8;
+--system-gray: #8E8E93;
+--system-gray2: #AEAEB2;
+--system-gray3: #C7C7CC;
+--system-gray4: #D1D1D6;
+--system-gray5: #E5E5EA;
+--system-gray6: #F2F2F7;
 ```
 
 ### Typography
@@ -74,31 +87,30 @@ const moodGradients = {
 - **Bold**: 700 (Headers, emphasis)
 - **Semibold**: 600 (Subheaders, buttons)
 - **Regular**: 400 (Body text)
-- **Light**: 300 (Subtle text)
 
 ### Spacing System
 ```javascript
 const Spacing = {
   xs: 4,
   sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
+  md: 12,
+  lg: 20,
+  xl: 28,
   xxl: 40
 };
 ```
 
 ### Effects
 
-#### Glass Morphism
+#### Glass Morphism (Updated)
 ```css
-/* Light Glass */
-background: rgba(255, 255, 255, 0.25);
+/* Light Glass - Used for cards on white background */
+background: rgba(255, 255, 255, 0.9);
 backdrop-filter: blur(20px);
-border: 1px solid rgba(255, 255, 255, 0.2);
-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+border: 1px solid rgba(0, 0, 0, 0.05);
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 
-/* Dark Glass */
+/* Dark Glass - Used for overlays */
 background: rgba(0, 0, 0, 0.8);
 backdrop-filter: blur(20px);
 border: 1px solid rgba(255, 255, 255, 0.1);
@@ -110,95 +122,67 @@ box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 ### 1. LiveTimeHeader
 **Purpose**: Dynamic header showing time, weather, and user info
 
-**Props**:
-```typescript
-interface LiveTimeHeaderProps {
-  userName: string;
-  userAvatar?: string;
-  notificationCount?: number;
-}
-```
-
 **Features**:
 - Real-time clock updates every second
-- Weather API integration
+- Weather display (temp + condition)
 - Notification badge
-- Glass morphism background
+- User avatar with initial
+- Glass morphism background on white
 
 ### 2. AIInsightCard
 **Purpose**: Display personalized AI-generated insights
 
-**Props**:
-```typescript
-interface AIInsightCardProps {
-  insight: string;
-  confidence: number;
-  isLive?: boolean;
-}
-```
-
 **Features**:
-- Live badge animation
+- Live badge with pulse animation
 - Confidence percentage display
 - Brain icon with glow effect
-- Glass morphism styling
+- Premium blue gradient background
 
 ### 3. StatsGrid
 **Purpose**: 2x2 grid showing key mood metrics
 
 **Components**:
-- Current Streak
-- Mood Score
-- Growth Rate  
-- Total Entries
+- Current Streak (with trend indicator)
+- Mood Score (with 5-dot progress)
+- Growth Rate (percentage)
+- Total Entries (with completion rate)
 
 **Visual Style**:
-- Individual glass morphism cards
-- Icon + value + label format
-- Hover/press animations
-- Trend indicators
+- Light glass morphism cards
+- Icon + value + subtitle format
+- Subtle shadows on white background
 
-### 4. EnhancedMoodSelector
-**Purpose**: 10 mood options for detailed emotional tracking
+### 4. EnhancedMoodSelector (Updated)
+**Purpose**: Simplified quick entry interface
 
-**Mood Scale**:
-1. 😭 Devastated
-2. 😢 Very Sad
-3. 😞 Sad
-4. 😟 Down
-5. 😐 Neutral
-6. 🙂 Good
-7. 😊 Happy
-8. 😍 Great
-9. 🤩 Amazing
-10. 😇 Euphoric
-
-**Features**:
-- 5x2 grid layout
-- Glass morphism buttons
-- Quick Entry, Voice, Camera actions
-- Haptic feedback
+**New Design (v4)**:
+- Removed emoji grid completely
+- Clean card with "Quick Entry" title
+- "Track your daily mood" subtitle
+- Three action buttons:
+  - Add Entry (primary, gradient)
+  - Voice (secondary)
+  - Camera (secondary)
+- Minimal glass morphism effect
 
 ### 5. MoodGallery
 **Purpose**: Pinterest-style display of mood entries
+
+**Position Update**:
+- Now appears directly after EnhancedMoodSelector
+- Before PeacefulSoundsWidget and DrMayaCard
 
 **Layout**:
 - 2-column masonry grid
 - Variable heights based on content
 - 12px gap between items
-- 16px horizontal padding
-
-**Entry Types**:
-1. **Image Box**: Photo with gradient overlay
-2. **Text Box**: Note with mood gradient background
-3. **Emoji Box**: Large centered emoji
-4. **Mixed Box**: Emoji + short text
+- White background
 
 ### 6. PeacefulSoundsWidget
 **Purpose**: Ambient music player for mood enhancement
 
 **Features**:
-- Dark glass morphism design
+- Dark glass morphism design (stands out on white)
 - Play/pause controls
 - Track information display
 - Skip functionality
@@ -207,276 +191,223 @@ interface AIInsightCardProps {
 **Purpose**: AI therapist booking and interaction
 
 **Features**:
+- White card with subtle border
 - Premium badge with crown icon
-- 24/7 availability indicator
-- Sample message display
-- CTA button with gradient
+- Session stats and rating
+- "Book AI Session" gradient button
 
-### 8. ModernTabBar
-**Purpose**: Custom bottom navigation
+### 8. ModernTabBar (Updated)
+**Purpose**: iPhone-style bottom navigation
 
-**Design**:
-- Floating tab bar with blur effect
-- Selected state with primary color
-- Icon + label display
-- Smooth transitions
+**New Design**:
+- Blur effect background (expo-blur)
+- 4 tabs: Home, Insights, History, Profile
+- Floating plus button in center
+- Active tab indicator (top line)
+- Tab labels only show for active tab
+- Fixed position at bottom
+
+### 9. MoodEntryScreen (New Modal Design)
+**Purpose**: iPhone-style modal for mood entry
+
+**Features**:
+- Full-screen modal with transparent background
+- Blur effect backdrop (expo-blur)
+- Slide-up animation with spring physics
+- Dismissible by:
+  - Tapping outside
+  - Cancel button
+  - Swipe down (planned)
+- Handle bar at top
+- 10 mood options in 5x2 grid
+- Selected mood display (large emoji + label)
+- Note input with character counter
+- Future options: Photo, Voice (disabled)
+
+**Modal Specifications**:
+```javascript
+// Animation
+translateY: withSpring(0, {
+  damping: 25,
+  stiffness: 150
+})
+
+// Backdrop
+BlurView: {
+  intensity: 20,
+  tint: 'dark'
+}
+```
 
 ## Screen Layouts
 
-### HomeScreenV2 (Current Implementation)
+### HomeScreenV2 (Current Implementation - December 2024)
+
+#### Key Changes:
+- Pure white background (#FFFFFF)
+- No gradient overlays
+- Reorganized component order
 
 #### Structure (Top to Bottom):
-1. **LiveTimeHeader** (120px)
-   - Time, weather, notifications
-   - Fixed position
-
+1. **LiveTimeHeader** (Fixed)
+   - Glass morphism on white
+   
 2. **ScrollView Content**:
-   - **AIInsightCard** (100px)
-   - **StatsGrid** (200px)
-   - **EnhancedMoodSelector** (250px)
-   - **PeacefulSoundsWidget** (80px)
-   - **MoodGallery** (Dynamic)
-   - **DrMayaCard** (180px)
+   - **AIInsightCard** 
+   - **StatsGrid**
+   - **EnhancedMoodSelector** (simplified)
+   - **MoodGallery** (moved up)
+   - **PeacefulSoundsWidget**
+   - **DrMayaCard**
 
-3. **ModernTabBar** (88px)
-   - Fixed position
+3. **ModernTabBar** (Fixed)
+   - Blur effect
+   - Floating plus button
 
-### HistoryScreenV2
+### MoodEntry Modal Flow
 
-#### Features:
-- Full Pinterest-style mood gallery
-- Filter chips (All/Week/Month)
-- Pull to refresh
-- 30+ entries displayed
-- Search functionality (planned)
-
-### MoodEntryScreen
-
-#### Modal Design:
-- Full screen modal with animation
-- Multiple input methods:
-  - Text entry (500 char limit)
-  - Photo capture/selection
-  - Video recording (30s)
-  - Voice message (60s)
-- Mood emoji selector
-- Save/Cancel actions
+#### Navigation:
+1. Plus button in tab bar → Opens modal
+2. Quick Entry button → Opens modal
+3. Modal appears with blur backdrop
+4. User selects mood and adds note
+5. Save → Close modal and save entry
+6. Cancel/Outside tap → Close modal
 
 ## Interaction Patterns
 
 ### Touch Interactions
 1. **Tap**: Primary action/navigation
-2. **Long Press**: Show context menu
-3. **Swipe**: Dismiss/navigate (where applicable)
+2. **Long Press**: Haptic feedback (future: context menu)
+3. **Swipe Down**: Dismiss modal (planned)
 4. **Pull to Refresh**: Reload data
 
 ### Animations
 ```javascript
-// Entry animations
-const fadeInUp = {
-  from: { opacity: 0, translateY: 20 },
-  to: { opacity: 1, translateY: 0 },
-  duration: 300,
-  easing: 'ease-out'
+// Modal entrance
+const modalIn = {
+  translateY: withSpring(0, {
+    damping: 25,
+    stiffness: 150
+  }),
+  opacity: withTiming(1, { duration: 300 })
 };
 
-// Press animations
-const pressScale = {
-  pressed: { scale: 0.95 },
-  duration: 100
-};
+// Tab selection
+const tabScale = withSpring(isFocused ? 1.1 : 1, {
+  damping: 15,
+  stiffness: 150
+});
 
-// Loading animations
-const shimmer = {
-  loop: true,
-  duration: 1500
-};
+// Button press
+const buttonScale = withSpring(0.95, {
+  damping: 15,
+  stiffness: 150
+});
 ```
 
 ### Haptic Feedback
-- Light impact on button press
+- Light impact on mood selection
 - Success vibration on mood save
-- Error vibration on failure
+- Subtle feedback on tab switches
 
-## Responsive Design
+## Navigation Architecture
 
-### Breakpoints
-- Small: < 375px (iPhone SE)
-- Medium: 375-414px (Standard phones)
-- Large: > 414px (Plus/Max phones)
-
-### Safe Areas
-```javascript
-const safeAreaPadding = {
-  top: 'env(safe-area-inset-top)',
-  bottom: 'env(safe-area-inset-bottom)',
-  left: 'env(safe-area-inset-left)',
-  right: 'env(safe-area-inset-right)'
-};
+### Stack Structure:
+```
+AppStack
+├── MainTabs (Tab Navigator)
+│   ├── Home (HomeScreenV2)
+│   ├── Insights
+│   ├── History (HistoryScreenV2)
+│   └── Profile
+└── MoodEntry (Modal)
 ```
 
-## Performance Guidelines
+### Modal Presentation:
+- Transparent modal overlay
+- Custom animations (no default navigation animation)
+- Handles navigation edge cases
 
-### Image Optimization
-- Lazy loading with placeholder
-- Progressive image loading
-- Maximum dimensions: 1200x1200
-- Compression: 80% quality
+## Performance Optimizations
 
-### List Optimization
-- Virtualization for lists > 50 items
-- RecyclerListView for infinite scroll
-- Memoization of expensive renders
+### Current Implementations:
+1. **Removed complex gradients** for better performance
+2. **Simplified mood selector** reduces render complexity
+3. **Lazy loading** for mood gallery images
+4. **Memoized components** where applicable
+5. **Native driver** for animations
 
-### Animation Performance
-- Use native driver where possible
-- Avoid animating layout properties
-- Batch state updates
-- 60fps target
+## Accessibility Updates
 
-## Accessibility
+### VoiceOver Support:
+- All buttons have proper labels
+- Modal announced when opened
+- Mood selections read as "X mood, Y out of 10"
+- Save/Cancel actions clearly labeled
 
-### VoiceOver Support
-- All interactive elements have labels
-- Mood scores announced as "X out of 10"
-- Images have descriptive alt text
-- Proper heading hierarchy
+### Touch Targets:
+- Minimum 44x44px for all interactive elements
+- 52x52px for secondary buttons
+- 56x56px for plus button
 
-### Visual Accessibility
-- Minimum contrast ratio: 4.5:1
-- Touch targets: minimum 44x44px
-- Focus indicators on all inputs
-- Reduced motion support
+## Recent Updates (December 2024)
 
-## Platform Considerations
+### What Changed:
+1. **Background**: Gradient → Pure white
+2. **Quick Entry**: Removed emoji grid, simplified to buttons
+3. **Navigation**: Added iPhone-style modal for mood entry
+4. **Tab Bar**: Modern design with blur effect
+5. **Layout**: Mood gallery moved up after quick entry
+6. **Colors**: Refined to work better on white background
 
-### iOS
-- Respect system appearance
-- Use iOS-specific gestures
-- Follow HIG guidelines
-- Support Dynamic Type
-
-### Android
-- Material Design elements where appropriate
-- Back button handling
-- Status bar theming
-- Adaptive icons
-
-### Web
-- Responsive layout
-- Keyboard navigation
-- Mouse hover states
-- PWA capabilities
+### Technical Updates:
+1. Fixed color references (no more undefined colors)
+2. Removed deprecated shadow properties
+3. Updated navigation flow for modal
+4. Added proper TypeScript interfaces
+5. Implemented smooth animations with Reanimated 2
 
 ## Future Enhancements
 
-### Planned Features
-1. **Dark Mode**: Full theme support
-2. **Widgets**: iOS/Android home screen
-3. **Watch App**: Apple Watch companion
-4. **iPad**: Optimized tablet layout
-5. **Themes**: User-selectable color schemes
+### Planned Features:
+1. **Swipe to dismiss** for modal
+2. **Voice recording** integration
+3. **Photo mood capture**
+4. **Dark mode** support
+5. **Landscape orientation** handling
 
-### Component Roadmap
+### Component Roadmap:
 1. **Mood Trends Chart**: Interactive visualizations
-2. **Social Features**: Mood sharing
-3. **AI Chat Interface**: Conversational UI
-4. **Voice UI**: Voice-first interactions
-5. **AR Features**: Mood visualization in AR
+2. **Weekly/Monthly views**: Calendar integration
+3. **Export functionality**: PDF/CSV reports
+4. **Sharing capabilities**: Social features
+5. **Widget support**: iOS/Android home screen
 
-## Component Usage Examples
+## Testing Checklist
 
-### Basic Mood Entry
-```jsx
-<EnhancedMoodSelector
-  selectedMood={selectedMood}
-  onMoodSelect={handleMoodSelect}
-  onQuickEntry={() => navigation.navigate('MoodEntry')}
-  onVoiceEntry={handleVoiceEntry}
-  onCameraEntry={handleCameraEntry}
-/>
-```
+### Visual Testing:
+- [x] White background consistency
+- [x] Glass morphism effects
+- [x] Modal blur backdrop
+- [x] Tab bar appearance
+- [ ] Dark mode (future)
 
-### Stats Display
-```jsx
-<StatsGrid
-  currentStreak={47}
-  streakTrend={3}
-  moodScore={8.7}
-  growthRate={24}
-  totalEntries={284}
-  completionRate={98}
-/>
-```
-
-### Mood Gallery
-```jsx
-<MoodGallery
-  entries={moodEntries}
-  onEntryPress={handleEntryPress}
-  onRefresh={handleRefresh}
-  columns={2}
-/>
-```
-
-## Design Tokens
-
-### Shadows
-```javascript
-const shadows = {
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8
-  }
-};
-```
-
-### Border Radius
-```javascript
-const borderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 20,
-  xl: 28,
-  full: 9999
-};
-```
-
-## Testing Guidelines
-
-### Visual Testing
-- Screenshot tests for key screens
-- Cross-device visual validation
-- Dark/light mode testing
-- Accessibility audit
-
-### Interaction Testing
-- Touch target validation
-- Animation performance
-- Scroll performance
-- Memory usage monitoring
+### Interaction Testing:
+- [x] Modal open/close animations
+- [x] Haptic feedback
+- [x] Tab switching
+- [x] Mood selection
+- [ ] Swipe gestures (future)
 
 ## Documentation Status
 - **Last Updated**: December 2024
-- **Version**: 3.0 (Premium Design)
-- **Implementation**: HomeScreenV2 + HistoryScreenV2
-- **Next Review**: January 2025
+- **Version**: 4.0 (Clean Modern Design)
+- **Implementation**: Complete
+- **Key Files**:
+  - HomeScreenV2.tsx
+  - MoodEntryScreen.tsx (modal)
+  - ModernTabBar.tsx
+  - EnhancedMoodSelector.tsx (simplified)
 
 This specification serves as the single source of truth for MoodVibe's UI design and should be updated as the design evolves.
