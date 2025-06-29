@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Icon } from './Icon';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Typography, Spacing, BorderRadius, GlassMorphism } from '../constants/theme';
 
 interface StatCardProps {
   icon: string;
@@ -37,7 +38,13 @@ function StatCard({
 }: StatCardProps) {
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.95}>
-      <View style={styles.cardContent}>
+      {Platform.OS === 'ios' ? (
+        <BlurView
+          intensity={GlassMorphism.blur.medium}
+          tint="light"
+          style={styles.blurView}
+        >
+          <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <LinearGradient
             colors={iconColors}
@@ -75,7 +82,51 @@ function StatCard({
         <Text style={[styles.subtitle, trend?.positive && styles.subtitlePositive]}>
           {subtitle}
         </Text>
-      </View>
+          </View>
+        </BlurView>
+      ) : (
+        <View style={styles.androidCard}>
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <LinearGradient
+                colors={iconColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.iconContainer}
+              >
+                <Icon name={icon} size={20} color="#FFFFFF" />
+              </LinearGradient>
+              {trend && (
+                <View style={[styles.trendBadge, trend.positive && styles.trendPositive]}>
+                  {trend.positive ? (
+                    <Icon name="trending" size={12} color="#10B981" />
+                  ) : (
+                    <Text style={styles.trendText}>{trend.value}</Text>
+                  )}
+                </View>
+              )}
+              {progress !== undefined && (
+                <View style={styles.progressDots}>
+                  {[...Array(5)].map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.dot,
+                        i < progress && styles.dotActive,
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+            <Text style={styles.label}>{label}</Text>
+            <Text style={styles.value}>{value}</Text>
+            <Text style={[styles.subtitle, trend?.positive && styles.subtitlePositive]}>
+              {subtitle}
+            </Text>
+          </View>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -146,15 +197,22 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: BorderRadius.xlarge,
+    overflow: 'hidden',
+    ...GlassMorphism.shadow.glass,
+  },
+  blurView: {
+    flex: 1,
+    backgroundColor: GlassMorphism.backgroundColor.card,
+    borderWidth: 1,
+    borderColor: GlassMorphism.borderColor.default,
+  },
+  androidCard: {
+    flex: 1,
+    backgroundColor: GlassMorphism.backgroundColor.cardAndroid,
     borderRadius: BorderRadius.xlarge,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 32,
-    elevation: 4,
+    borderColor: GlassMorphism.borderColor.subtle,
   },
   cardContent: {
     padding: Spacing.lg,

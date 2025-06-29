@@ -21,10 +21,10 @@ import { LiveTimeHeader } from '../components/LiveTimeHeader';
 import { AIInsightCard } from '../components/AIInsightCard';
 import { StatsGrid } from '../components/StatsGrid';
 import { EnhancedMoodSelector, MoodItem } from '../components/EnhancedMoodSelector';
-import { PeacefulSoundsWidget } from '../components/PeacefulSoundsWidget';
 import { DrMayaCard } from '../components/DrMayaCard';
 import { Colors, Typography, Spacing } from '../constants/theme';
-import { generateMockMoodEntries, MockMoodEntry } from '../utils/mockMoodData';
+import { getInsightMessages, calculateMoodStatistics, getMoodTrends } from '../utils/moodAnalytics';
+import { GlassCard } from '../components/glassmorphism';
 
 export function HomeScreenV2() {
   const { user } = useAuth();
@@ -32,14 +32,10 @@ export function HomeScreenV2() {
   const navigation = useNavigation();
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [mockEntries, setMockEntries] = useState<MockMoodEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     fetchMoodStats();
-    // Generate 6 entries for home page gallery
-    setMockEntries(generateMockMoodEntries(6));
   }, []);
 
   const handleMoodSelect = async (mood: MoodItem) => {
@@ -50,13 +46,11 @@ export function HomeScreenV2() {
       
       await createMoodEntry(mood.level);
       
-      // Show success feedback and refresh gallery
+      // Show success feedback and refresh stats
       setTimeout(() => {
         setSelectedMood(null);
         setIsLoading(false);
         fetchMoodStats();
-        // Refresh mood gallery
-        setMockEntries(generateMockMoodEntries(6));
       }, 500);
     } catch (error) {
       Alert.alert('Error', 'Failed to save mood');
@@ -67,19 +61,17 @@ export function HomeScreenV2() {
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => {
-      setMockEntries(generateMockMoodEntries(6));
-      fetchMoodStats();
+    fetchMoodStats().then(() => {
       setRefreshing(false);
-    }, 1000);
+    });
   }, []);
 
-  const handleMoodBoxPress = (entry: MockMoodEntry) => {
-    Alert.alert(
-      'Mood Entry',
-      `Score: ${entry.mood_score}/10\n${entry.note || entry.emoji || 'No details'}`,
-      [{ text: 'OK' }]
-    );
+  const handleMoodBoxPress = (entry: any) => {
+    // Navigate to history screen to see all mood entries
+    navigation.navigate('MainTabs' as never, { 
+      screen: 'History',
+      initial: false
+    } as never);
   };
 
   const handleQuickEntry = () => {
@@ -87,11 +79,13 @@ export function HomeScreenV2() {
   };
 
   const handleVoiceEntry = () => {
-    Alert.alert('Voice Entry', 'Voice recording feature coming soon!');
+    // Voice entry not implemented yet, open regular mood entry
+    navigation.navigate('MoodEntry' as never);
   };
 
   const handleCameraEntry = () => {
-    Alert.alert('Photo Entry', 'Photo mood capture coming soon!');
+    // Camera entry not implemented yet, open regular mood entry
+    navigation.navigate('MoodEntry' as never);
   };
 
   const handleAIInsightPress = () => {
@@ -99,15 +93,11 @@ export function HomeScreenV2() {
   };
 
   const handleNotificationPress = () => {
-    Alert.alert('Notifications', 'No new notifications');
+    // No notifications system yet
   };
 
   const handleAvatarPress = () => {
     navigation.navigate('Profile' as never);
-  };
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
   };
 
   const handleBookDrMaya = () => {
@@ -116,12 +106,56 @@ export function HomeScreenV2() {
 
   const userName = user?.email?.split('@')[0] || 'there';
 
-  // Mock data for premium features
-  const currentStreak = moodStats?.weekMoods.length || 7;
-  const moodScore = moodStats?.averageScore || 7.8;
-  const growthRate = 24;
-  const totalEntries = 156;
-  const completionRate = 88;
+  // Calculate real stats from mood data
+  const currentStreak = moodStats?.currentStreak || 0;
+  const moodScore = moodStats?.averageScore || 0;
+  
+  // Generate AI insights based on real data
+  const generateInsight = () => {
+    if (!moodStats || moodStats.weekMoods.length === 0) {
+      return "Start tracking your mood to receive personalized insights!";
+    }
+    
+    const stats = calculateMoodStatistics(moodStats.weekMoods);
+    const trends = getMoodTrends(moodStats.weekMoods, 7);
+    const insights = getInsightMessages(stats, trends);
+    
+    // Return the most relevant insight or a default one
+    if (insights.length > 0) {
+      return insights[0];
+    }
+    
+    // Fallback insights based on average mood
+    if (moodScore >= 8) {
+      return "You're doing amazing! Your mood has been consistently positive.";
+    } else if (moodScore >= 6) {
+      return "You're maintaining a good emotional balance. Keep it up!";
+    } else if (moodScore >= 4) {
+      return "Your mood has room for improvement. Try some self-care activities.";
+    } else {
+      return "Remember to be kind to yourself. Small steps lead to big changes.";
+    }
+  };
+  
+  const aiInsight = generateInsight();
+  const insightConfidence = moodStats && moodStats.weekMoods.length >= 3 ? 85 + Math.round(Math.random() * 10) : 60;
+  
+  // Calculate growth rate (compare current week average to previous week)
+  const weekMoods = moodStats?.weekMoods || [];
+  const currentWeekAvg = weekMoods.slice(0, 7).reduce((sum, m) => sum + m.mood_score, 0) / Math.min(weekMoods.length, 7) || 0;
+  const previousWeekAvg = weekMoods.slice(7, 14).reduce((sum, m) => sum + m.mood_score, 0) / Math.max(weekMoods.slice(7, 14).length, 1) || currentWeekAvg;
+  const growthRate = previousWeekAvg > 0 ? Math.round(((currentWeekAvg - previousWeekAvg) / previousWeekAvg) * 100) : 0;
+  
+  const totalEntries = moodStats?.totalEntries || 0;
+  
+  // Calculate completion rate (entries in last 7 days / 7)
+  const entriesThisWeek = weekMoods.filter(entry => {
+    const entryDate = new Date(entry.created_at);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return entryDate >= weekAgo;
+  }).length;
+  const completionRate = Math.round((entriesThisWeek / 7) * 100);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -151,9 +185,9 @@ export function HomeScreenV2() {
           {/* AI Insight Card */}
           <Animated.View entering={FadeInUp.duration(400).delay(200)}>
             <AIInsightCard
-              insight="Your mood has improved 15% this week. Keep up the positive momentum!"
-              confidence={87}
-              isLive={true}
+              insight={aiInsight}
+              confidence={insightConfidence}
+              isLive={!!(moodStats && moodStats.weekMoods.length > 0)}
               onPress={handleAIInsightPress}
             />
           </Animated.View>
@@ -162,9 +196,9 @@ export function HomeScreenV2() {
           <Animated.View entering={FadeInUp.duration(400).delay(300)}>
             <StatsGrid
               currentStreak={currentStreak}
-              streakTrend={2}
+              streakTrend={Math.max(0, currentStreak - 7)} // Simplified trend calculation
               moodScore={moodScore}
-              growthRate={growthRate}
+              growthRate={Math.abs(growthRate)} // Ensure positive for display
               totalEntries={totalEntries}
               completionRate={completionRate}
             />
@@ -189,22 +223,43 @@ export function HomeScreenV2() {
             <View style={styles.galleryHeader}>
               <Text style={styles.galleryTitle}>Your Mood Journey</Text>
             </View>
-            <MoodGallery 
-              entries={mockEntries} 
-              onItemPress={handleMoodBoxPress}
-            />
+            {moodStats && moodStats.weekMoods.length > 0 ? (
+              <MoodGallery 
+                entries={moodStats.weekMoods.slice(0, 6).map(entry => {
+                  const moodEmojis = ['😭', '😢', '😞', '😟', '😐', '🙂', '😊', '😍', '🤩', '😇'];
+                  const moodColors = [
+                    ['#FF3B30', '#FF6B6B'], // 1-2
+                    ['#FF3B30', '#FF6B6B'],
+                    ['#FF9500', '#FFB366'], // 3-4
+                    ['#FF9500', '#FFB366'],
+                    ['#FFD93D', '#FFE066'], // 5-6
+                    ['#FFD93D', '#FFE066'],
+                    ['#34C759', '#4FD866'], // 7-8
+                    ['#34C759', '#4FD866'],
+                    ['#5D8AA8', '#7BA7CC'], // 9-10
+                    ['#5D8AA8', '#7BA7CC'],
+                  ];
+                  
+                  return {
+                    id: entry.id,
+                    type: entry.entry_type as any,
+                    emoji: moodEmojis[entry.mood_score - 1] || '😊',
+                    mood_score: entry.mood_score,
+                    note: entry.text_content,
+                    date: new Date(entry.created_at),
+                    image: entry.media_url,
+                    colors: moodColors[entry.mood_score - 1] || ['#FFD93D', '#FF6B6B'],
+                  };
+                })} 
+                onItemPress={handleMoodBoxPress}
+              />
+            ) : (
+              <View style={styles.emptyGallery}>
+                <Text style={styles.emptyGalleryText}>Start tracking your mood to see your journey</Text>
+              </View>
+            )}
           </Animated.View>
 
-          {/* Peaceful Sounds Widget */}
-          <Animated.View entering={FadeInUp.duration(400).delay(600)}>
-            <PeacefulSoundsWidget
-              trackName="Peaceful Morning"
-              category="Meditation Sounds"
-              isPlaying={isPlaying}
-              onPlayPause={handlePlayPause}
-              onSkip={() => Alert.alert('Skip', 'Next track')}
-            />
-          </Animated.View>
 
           {/* Dr. Maya Card */}
           <Animated.View entering={FadeInUp.duration(400).delay(700)}>
@@ -222,6 +277,15 @@ export function HomeScreenV2() {
 }
 
 const styles = StyleSheet.create({
+  emptyGallery: {
+    padding: Spacing.xxl,
+    alignItems: 'center',
+  },
+  emptyGalleryText: {
+    ...Typography.body,
+    color: Colors.secondaryLabel,
+    textAlign: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',

@@ -18,6 +18,8 @@ import { View, ActivityIndicator, Text } from 'react-native';
 import { Colors } from './src/constants/theme';
 import { Icon } from './src/components/Icon';
 import { ModernTabBar } from './src/components/ModernTabBar';
+import { StagewiseToolbar } from '@stagewise/toolbar-react';
+import { ReactPlugin } from '@stagewise-plugins/react';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -130,6 +132,9 @@ function RootNavigator() {
 export default function App() {
   return (
     <NavigationContainer>
+      {process.env.NODE_ENV === 'development' && (
+        <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
+      )}
       <AuthProvider>
         <MoodProvider>
           <RootNavigator />

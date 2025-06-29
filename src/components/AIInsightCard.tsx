@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   withRepeat,
@@ -7,8 +7,9 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Icon } from './Icon';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Typography, Spacing, BorderRadius, GlassMorphism } from '../constants/theme';
 
 interface AIInsightCardProps {
   insight: string;
@@ -45,13 +46,20 @@ export function AIInsightCard({
       onPress={onPress}
       activeOpacity={0.9}
     >
-      <LinearGradient
-        colors={[Colors.primary + 'E6', Colors.primaryLight + 'E6']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientContainer}
-      >
-        <View style={styles.content}>
+      <View style={styles.cardWrapper}>
+        {Platform.OS === 'ios' ? (
+          <BlurView
+            intensity={GlassMorphism.blur.strong}
+            tint="light"
+            style={styles.blurContainer}
+          >
+            <LinearGradient
+              colors={['rgba(93, 138, 168, 0.15)', 'rgba(107, 152, 182, 0.15)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.content}>
           <View style={styles.leftSection}>
             <View style={styles.iconContainer}>
               <Icon name="brain" size={24} color="#FFFFFF" />
@@ -79,8 +87,47 @@ export function AIInsightCard({
             size={20}
             color="rgba(255, 255, 255, 0.8)"
           />
-        </View>
-      </LinearGradient>
+            </View>
+          </BlurView>
+        ) : (
+          <LinearGradient
+            colors={[Colors.primary + 'E6', Colors.primaryLight + 'E6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientContainer}
+          >
+            <View style={styles.content}>
+              <View style={styles.leftSection}>
+                <View style={styles.iconContainer}>
+                  <Icon name="brain" size={24} color="#FFFFFF" />
+                </View>
+                <View style={styles.textContent}>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.title}>AI Insight</Text>
+                    {isLive && (
+                      <Animated.View style={[styles.liveBadge, liveBadgeStyle]}>
+                        <Text style={styles.liveText}>LIVE</Text>
+                      </Animated.View>
+                    )}
+                  </View>
+                  <Text style={styles.insight}>{insight}</Text>
+                  <View style={styles.confidenceRow}>
+                    <View style={styles.confidenceDot} />
+                    <Text style={styles.confidenceText}>
+                      {confidence}% confidence
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <Icon
+                name="chevronRight"
+                size={20}
+                color="rgba(255, 255, 255, 0.8)"
+              />
+            </View>
+          </LinearGradient>
+        )}
+      </View>
     </TouchableOpacity>
   );
 }
@@ -89,18 +136,21 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing.lg,
+  },
+  cardWrapper: {
     borderRadius: BorderRadius.xlarge,
     overflow: 'hidden',
+    ...GlassMorphism.shadow.glass,
+  },
+  blurContainer: {
+    borderRadius: BorderRadius.xlarge,
+    borderWidth: 1,
+    borderColor: GlassMorphism.borderColor.default,
   },
   gradientContainer: {
     borderRadius: BorderRadius.xlarge,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 32,
-    elevation: 8,
   },
   content: {
     flexDirection: 'row',
@@ -139,7 +189,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Platform.OS === 'ios' ? Colors.primary : '#FFFFFF',
   },
   liveBadge: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -155,7 +205,7 @@ const styles = StyleSheet.create({
   insight: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: Platform.OS === 'ios' ? Colors.label : 'rgba(255, 255, 255, 0.9)',
     lineHeight: 20,
     marginBottom: 8,
   },
@@ -172,6 +222,6 @@ const styles = StyleSheet.create({
   },
   confidenceText: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: Platform.OS === 'ios' ? Colors.secondaryLabel : 'rgba(255, 255, 255, 0.8)',
   },
 });

@@ -174,6 +174,53 @@ export const Animation = {
   },
 };
 
+// Glass morphism constants
+export const GlassMorphism = {
+  blur: {
+    minimal: 10,
+    light: 20,
+    medium: 40,
+    strong: 60,
+    intense: 80,
+    max: 100,
+  },
+  tint: {
+    light: 'light' as const,
+    dark: 'dark' as const,
+    default: 'default' as const,
+  },
+  backgroundColor: {
+    card: 'rgba(255, 255, 255, 0.25)',
+    cardAndroid: 'rgba(255, 255, 255, 0.95)',
+    modal: 'rgba(255, 255, 255, 0.1)',
+    navigation: 'rgba(255, 255, 255, 0.7)',
+    navigationScrolled: 'rgba(255, 255, 255, 0.9)',
+    button: 'rgba(255, 255, 255, 0.2)',
+    buttonPrimary: 'rgba(93, 138, 168, 0.3)',
+  },
+  borderColor: {
+    default: 'rgba(255, 255, 255, 0.3)',
+    strong: 'rgba(255, 255, 255, 0.4)',
+    subtle: 'rgba(255, 255, 255, 0.2)',
+  },
+  shadow: {
+    glass: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.1,
+      shadowRadius: 24,
+      elevation: 8,
+    },
+    glassSubtle: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+  },
+};
+
 // Gradient definitions
 export const Gradients = {
   // Mood gradients

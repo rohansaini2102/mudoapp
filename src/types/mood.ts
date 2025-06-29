@@ -14,6 +14,10 @@ export interface MoodStats {
   weekMoods: MoodEntry[];
   averageScore: number;
   totalEntries: number;
+  currentStreak?: number;
+  longestStreak?: number;
+  weekdayAverages?: Record<string, number>;
+  standardDeviation?: number;
 }
 
 export interface MoodContextType {
@@ -21,6 +25,6 @@ export interface MoodContextType {
   setCurrentMood: (mood: number) => void;
   moodStats: MoodStats | null;
   loading: boolean;
-  createMoodEntry: (mood: number, text?: string) => Promise<void>;
+  createMoodEntry: (mood: number, text?: string, imageUri?: string, voiceUri?: string) => Promise<void>;
   fetchMoodStats: () => Promise<void>;
 }

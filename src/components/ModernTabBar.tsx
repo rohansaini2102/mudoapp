@@ -3,13 +3,14 @@ import { View, TouchableOpacity, StyleSheet, Text, Platform } from 'react-native
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
-import { Colors, Spacing } from '../constants/theme';
+import { Colors, Spacing, GlassMorphism } from '../constants/theme';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   interpolate,
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 interface TabBarProps {
   state: any;
@@ -49,13 +50,19 @@ export function ModernTabBar({ state, descriptors, navigation }: TabBarProps) {
   }));
 
   const handlePlusPress = () => {
-    // Navigate to MoodEntry modal
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     navigation.navigate('MoodEntry');
   };
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      <BlurView intensity={80} tint="light" style={styles.blurContainer}>
+      {Platform.OS === 'ios' ? (
+        <BlurView 
+          intensity={GlassMorphism.blur.intense} 
+          tint={GlassMorphism.tint.light} 
+          style={styles.blurContainer}
+        >
+          <View style={styles.glassBorder} />
         <View style={styles.tabContainer}>
           {/* Active Tab Indicator */}
           <Animated.View style={[styles.activeIndicator, indicatorStyle]} />
@@ -71,6 +78,7 @@ export function ModernTabBar({ state, descriptors, navigation }: TabBarProps) {
             const isFocused = state.index === index;
 
             const onPress = () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               const event = navigation.emit({
                 type: 'tabPress',
                 target: route.key,
@@ -156,7 +164,111 @@ export function ModernTabBar({ state, descriptors, navigation }: TabBarProps) {
             );
           })}
         </View>
-      </BlurView>
+        </BlurView>
+      ) : (
+        <View style={styles.androidContainer}>
+          <View style={styles.tabContainer}>
+            {/* Active Tab Indicator */}
+            <Animated.View style={[styles.activeIndicator, indicatorStyle]} />
+            
+            {state.routes.map((route: any, index: number) => {
+              const { options } = descriptors[route.key];
+              const label = options.tabBarLabel !== undefined
+                ? options.tabBarLabel
+                : options.title !== undefined
+                ? options.title
+                : route.name;
+
+              const isFocused = state.index === index;
+
+              const onPress = () => {
+                const event = navigation.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+
+                if (!isFocused && !event.defaultPrevented) {
+                  navigation.navigate(route.name);
+                }
+              };
+
+              const animatedIconStyle = useAnimatedStyle(() => ({
+                transform: [
+                  {
+                    scale: withSpring(isFocused ? 1.1 : 1, {
+                      damping: 15,
+                      stiffness: 150,
+                    }),
+                  },
+                ],
+              }));
+
+              // Add plus button in the middle
+              if (index === 2) {
+                return (
+                  <React.Fragment key={`${route.key}-fragment`}>
+                    <TouchableOpacity
+                      key={route.key}
+                      accessibilityRole="button"
+                      accessibilityState={isFocused ? { selected: true } : {}}
+                      accessibilityLabel={options.tabBarAccessibilityLabel}
+                      testID={options.tabBarTestID}
+                      onPress={onPress}
+                      style={styles.tab}
+                    >
+                      <Animated.View style={animatedIconStyle}>
+                        <Icon
+                          name={TAB_ICONS[route.name] || 'home'}
+                          size={24}
+                          color={isFocused ? Colors.primary : Colors.secondaryLabel}
+                        />
+                      </Animated.View>
+                      {isFocused && (
+                        <Text style={styles.label}>{label}</Text>
+                      )}
+                    </TouchableOpacity>
+                    
+                    {/* Plus button */}
+                    <TouchableOpacity
+                      key="mood-entry-button"
+                      onPress={handlePlusPress}
+                      style={styles.middleTab}
+                    >
+                      <View style={styles.plusButton}>
+                        <Icon name="plus" size={24} color="#FFFFFF" />
+                      </View>
+                    </TouchableOpacity>
+                  </React.Fragment>
+                );
+              }
+
+              return (
+                <TouchableOpacity
+                  key={route.key}
+                  accessibilityRole="button"
+                  accessibilityState={isFocused ? { selected: true } : {}}
+                  accessibilityLabel={options.tabBarAccessibilityLabel}
+                  testID={options.tabBarTestID}
+                  onPress={onPress}
+                  style={styles.tab}
+                >
+                  <Animated.View style={animatedIconStyle}>
+                    <Icon
+                      name={TAB_ICONS[route.name] || 'home'}
+                      size={24}
+                      color={isFocused ? Colors.primary : Colors.secondaryLabel}
+                    />
+                  </Animated.View>
+                  {isFocused && (
+                    <Text style={styles.label}>{label}</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -170,11 +282,26 @@ const styles = StyleSheet.create({
   },
   blurContainer: {
     flexDirection: 'row',
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.95)',
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: GlassMorphism.backgroundColor.navigation,
     paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
+    paddingBottom: 0,
+  },
+  androidContainer: {
+    flexDirection: 'row',
+    backgroundColor: GlassMorphism.backgroundColor.cardAndroid,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: GlassMorphism.borderColor.subtle,
+    paddingTop: 12,
+    paddingBottom: 16,
+    ...GlassMorphism.shadow.glassSubtle,
+  },
+  glassBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: GlassMorphism.borderColor.subtle,
   },
   tabContainer: {
     flex: 1,
@@ -214,10 +341,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+    // Glass effect overlay
+    overflow: 'hidden',
   },
   label: {
     fontSize: 10,

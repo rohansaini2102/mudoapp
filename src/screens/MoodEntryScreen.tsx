@@ -27,8 +27,10 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useMood } from '../contexts/MoodContext';
-import { Colors, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, GlassMorphism } from '../constants/theme';
 import { Icon } from '../components/Icon';
+import { MediaPicker } from '../components/MediaPicker';
+import { VoiceRecorder } from '../components/VoiceRecorder';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -60,6 +62,10 @@ export function MoodEntryScreen() {
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [voiceRecording, setVoiceRecording] = useState<string | null>(null);
   
   const translateY = useSharedValue(SCREEN_HEIGHT);
   const backdropOpacity = useSharedValue(0);
@@ -67,19 +73,20 @@ export function MoodEntryScreen() {
   useEffect(() => {
     // Animate modal in
     translateY.value = withSpring(0, {
-      damping: 25,
-      stiffness: 150,
+      damping: 20,
+      stiffness: 120,
+      mass: 1,
     });
-    backdropOpacity.value = withTiming(1, { duration: 300 });
+    backdropOpacity.value = withTiming(1, { duration: 400 });
   }, []);
 
   const closeModal = () => {
     'worklet';
     translateY.value = withSpring(SCREEN_HEIGHT, {
-      damping: 25,
+      damping: 20,
       stiffness: 150,
     });
-    backdropOpacity.value = withTiming(0, { duration: 200 });
+    backdropOpacity.value = withTiming(0, { duration: 300 });
     
     runOnJS(() => {
       setTimeout(() => {
@@ -98,7 +105,12 @@ export function MoodEntryScreen() {
     Vibration.vibrate(10);
     
     try {
-      await createMoodEntry(selectedMood, note.trim() || undefined);
+      await createMoodEntry(
+        selectedMood, 
+        note.trim() || undefined,
+        selectedImage || undefined,
+        voiceRecording || undefined
+      );
       closeModal();
     } catch (error) {
       Alert.alert('Error', 'Failed to save mood entry. Please try again.');
@@ -129,11 +141,19 @@ export function MoodEntryScreen() {
     >
       <View style={styles.container}>
         {/* Backdrop with blur */}
-        <Animated.View style={[styles.backdrop, backdropStyle]}>
-          <TouchableWithoutFeedback onPress={closeModal}>
-            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-          </TouchableWithoutFeedback>
-        </Animated.View>
+        <TouchableWithoutFeedback onPress={closeModal}>
+          <Animated.View style={[styles.backdrop, backdropStyle]}>
+            {Platform.OS === 'ios' ? (
+              <BlurView 
+                intensity={GlassMorphism.blur.max} 
+                tint={GlassMorphism.tint.dark} 
+                style={StyleSheet.absoluteFill} 
+              />
+            ) : (
+              <View style={styles.androidBackdrop} />
+            )}
+          </Animated.View>
+        </TouchableWithoutFeedback>
 
         {/* Modal content */}
         <Animated.View style={[styles.modalContainer, modalStyle]}>
@@ -223,21 +243,79 @@ export function MoodEntryScreen() {
                   </View>
                 </View>
 
+                {/* Media attachments */}
+                {(selectedImage || voiceRecording) && (
+                  <View style={styles.attachments}>
+                    <Text style={styles.attachmentsTitle}>Attachments</Text>
+                    {selectedImage && (
+                      <View style={styles.attachmentItem}>
+                        <Icon name="images" size={16} color={Colors.primary} />
+                        <Text style={styles.attachmentText}>Photo added</Text>
+                      </View>
+                    )}
+                    {voiceRecording && (
+                      <View style={styles.attachmentItem}>
+                        <Icon name="mic" size={16} color={Colors.primary} />
+                        <Text style={styles.attachmentText}>Voice note added</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
                 {/* Quick options */}
                 <View style={styles.quickOptions}>
-                  <TouchableOpacity style={styles.quickOption} disabled>
-                    <View style={styles.quickOptionIcon}>
-                      <Icon name="camera" size={20} color={Colors.secondaryLabel} />
+                  <TouchableOpacity 
+                    style={styles.quickOption} 
+                    onPress={() => {
+                      Vibration.vibrate(10);
+                      setShowMediaPicker(!showMediaPicker);
+                      setShowVoiceRecorder(false);
+                    }}
+                  >
+                    <View style={[styles.quickOptionIcon, showMediaPicker && styles.quickOptionActive]}>
+                      <Icon name="camera" size={20} color={showMediaPicker ? Colors.primary : Colors.secondaryLabel} />
                     </View>
-                    <Text style={styles.quickOptionText}>Photo</Text>
+                    <Text style={[styles.quickOptionText, showMediaPicker && styles.quickOptionTextActive]}>Photo</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.quickOption} disabled>
-                    <View style={styles.quickOptionIcon}>
-                      <Icon name="mic" size={20} color={Colors.secondaryLabel} />
+                  <TouchableOpacity 
+                    style={styles.quickOption} 
+                    onPress={() => {
+                      Vibration.vibrate(10);
+                      setShowVoiceRecorder(!showVoiceRecorder);
+                      setShowMediaPicker(false);
+                    }}
+                  >
+                    <View style={[styles.quickOptionIcon, showVoiceRecorder && styles.quickOptionActive]}>
+                      <Icon name="mic" size={20} color={showVoiceRecorder ? Colors.primary : Colors.secondaryLabel} />
                     </View>
-                    <Text style={styles.quickOptionText}>Voice</Text>
+                    <Text style={[styles.quickOptionText, showVoiceRecorder && styles.quickOptionTextActive]}>Voice</Text>
                   </TouchableOpacity>
                 </View>
+
+                {/* Media picker */}
+                {showMediaPicker && (
+                  <MediaPicker
+                    onImageSelected={(uri) => {
+                      setSelectedImage(uri || null);
+                      if (!uri) setShowMediaPicker(false);
+                    }}
+                    currentImage={selectedImage}
+                  />
+                )}
+
+                {/* Voice recorder */}
+                {showVoiceRecorder && (
+                  <VoiceRecorder
+                    onRecordingComplete={(uri) => {
+                      setVoiceRecording(uri);
+                    }}
+                    onDelete={() => {
+                      setVoiceRecording(null);
+                      setShowVoiceRecorder(false);
+                    }}
+                    currentRecording={voiceRecording}
+                  />
+                )}
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
@@ -254,6 +332,10 @@ const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
   },
+  androidBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
   modalContainer: {
     position: 'absolute',
     bottom: 0,
@@ -264,23 +346,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modal: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.98)' : '#FFFFFF',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     maxHeight: SCREEN_HEIGHT * 0.9,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 20,
+    ...GlassMorphism.shadow.glass,
+    // iOS glass effect
+    ...(Platform.OS === 'ios' && {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: GlassMorphism.borderColor.subtle,
+    }),
   },
   handleBar: {
-    width: 36,
+    width: 40,
     height: 5,
-    backgroundColor: Colors.systemGray4,
-    borderRadius: 3,
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(0, 0, 0, 0.2)' : Colors.systemGray4,
+    borderRadius: 2.5,
     alignSelf: 'center',
-    marginTop: 8,
+    marginTop: 12,
     marginBottom: 8,
   },
   header: {
@@ -401,7 +484,6 @@ const styles = StyleSheet.create({
   },
   quickOption: {
     alignItems: 'center',
-    opacity: 0.5,
   },
   quickOptionIcon: {
     width: 56,
@@ -412,8 +494,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.sm,
   },
+  quickOptionActive: {
+    backgroundColor: Colors.primary + '20',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
   quickOptionText: {
     fontSize: 13,
     color: Colors.secondaryLabel,
+  },
+  quickOptionTextActive: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  attachments: {
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    backgroundColor: Colors.primary + '08',
+    borderRadius: BorderRadius.medium,
+    borderWidth: 1,
+    borderColor: Colors.primary + '15',
+  },
+  attachmentsTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.primary,
+    marginBottom: Spacing.sm,
+  },
+  attachmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  attachmentText: {
+    fontSize: 14,
+    color: Colors.label,
   },
 });

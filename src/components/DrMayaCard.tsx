@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Icon } from './Icon';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Typography, Spacing, BorderRadius, GlassMorphism } from '../constants/theme';
+import * as Haptics from 'expo-haptics';
 
 interface DrMayaCardProps {
   nextAvailable: string;
@@ -21,12 +23,13 @@ export function DrMayaCard({
 }: DrMayaCardProps) {
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.card}
-      >
+      {Platform.OS === 'ios' ? (
+        <BlurView
+          intensity={GlassMorphism.blur.medium}
+          tint="light"
+          style={styles.card}
+        >
+          <View style={styles.glassOverlay}>
         <View style={styles.header}>
           <View style={styles.avatarSection}>
             <LinearGradient
@@ -74,7 +77,10 @@ export function DrMayaCard({
 
         <TouchableOpacity
           style={styles.bookButton}
-          onPress={onBookPress}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onBookPress();
+          }}
           activeOpacity={0.8}
         >
           <LinearGradient
@@ -91,7 +97,79 @@ export function DrMayaCard({
         <Text style={styles.disclaimer}>
           24/7 AI-powered emotional support
         </Text>
-      </LinearGradient>
+          </View>
+        </BlurView>
+      ) : (
+        <View style={styles.androidCard}>
+          <View style={styles.header}>
+            <View style={styles.avatarSection}>
+              <LinearGradient
+                colors={[Colors.primary, Colors.primaryLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatarContainer}
+              >
+                <Icon name="bot" size={32} color="#FFFFFF" />
+              </LinearGradient>
+              <View style={styles.badgeContainer}>
+                <LinearGradient
+                  colors={['#FFD700', '#FFA500']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.premiumBadge}
+                >
+                  <Icon name="crown" size={12} color="#FFFFFF" />
+                </LinearGradient>
+              </View>
+            </View>
+            
+            <View style={styles.info}>
+              <Text style={styles.name}>Dr. Maya AI</Text>
+              <Text style={styles.speciality}>{speciality}</Text>
+              
+              <View style={styles.stats}>
+                <View style={styles.statItem}>
+                  <Icon name="messageCircle" size={14} color={Colors.secondaryLabel} />
+                  <Text style={styles.statText}>{sessionsCompleted} sessions</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.rating}>⭐ {rating.toFixed(1)}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.availabilitySection}>
+            <Text style={styles.availabilityLabel}>Next Available</Text>
+            <Text style={styles.availabilityTime}>{nextAvailable}</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.bookButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onBookPress();
+            }}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[Colors.primary, Colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.bookButtonGradient}
+            >
+              <Text style={styles.bookButtonText}>Book AI Session</Text>
+              <Icon name="chevronRight" size={18} color="#FFFFFF" />
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <Text style={styles.disclaimer}>
+            24/7 AI-powered emotional support
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -104,15 +182,22 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   card: {
-    padding: Spacing.xl,
     borderRadius: BorderRadius.xlarge,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.1,
-    shadowRadius: 40,
-    elevation: 8,
+    borderColor: GlassMorphism.borderColor.default,
+    backgroundColor: GlassMorphism.backgroundColor.card,
+    overflow: 'hidden',
+  },
+  glassOverlay: {
+    padding: Spacing.xl,
+  },
+  androidCard: {
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.xlarge,
+    backgroundColor: GlassMorphism.backgroundColor.cardAndroid,
+    borderWidth: 1,
+    borderColor: GlassMorphism.borderColor.subtle,
+    ...GlassMorphism.shadow.glass,
   },
   header: {
     flexDirection: 'row',

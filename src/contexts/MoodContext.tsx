@@ -3,6 +3,7 @@ import { MoodEntry, MoodStats, MoodContextType } from '../types/mood';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { checkAndSeedData } from '../utils/seedDummyData';
+import { calculateMoodStatistics } from '../utils/moodAnalytics';
 
 const MoodContext = createContext<MoodContextType | undefined>(undefined);
 
@@ -55,17 +56,33 @@ export function MoodProvider({ children }: { children: ReactNode }) {
 
       if (weekError) throw weekError;
 
-      // Calculate stats
+      // Calculate basic stats
       const totalEntries = weekData?.length || 0;
       const averageScore = totalEntries > 0
         ? weekData.reduce((sum, entry) => sum + entry.mood_score, 0) / totalEntries
         : 0;
 
+      // Get all entries for comprehensive statistics
+      const { data: allData, error: allError } = await supabase
+        .from('mood_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (allError) throw allError;
+
+      // Calculate comprehensive statistics
+      const fullStats = calculateMoodStatistics(allData || []);
+
       setMoodStats({
         todayMood: todayData?.[0] || undefined,
         weekMoods: weekData || [],
         averageScore: Math.round(averageScore * 10) / 10,
-        totalEntries,
+        totalEntries: fullStats.totalEntries,
+        currentStreak: fullStats.currentStreak,
+        longestStreak: fullStats.longestStreak,
+        weekdayAverages: fullStats.weekdayAverages,
+        standardDeviation: fullStats.standardDeviation,
       });
     } catch (error) {
       console.error('Error fetching mood stats:', error);
@@ -74,16 +91,33 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const createMoodEntry = async (mood: number, text?: string) => {
+  const createMoodEntry = async (mood: number, text?: string, imageUri?: string, voiceUri?: string) => {
     if (!user) throw new Error('User not authenticated');
 
     setLoading(true);
     try {
-      const entry: Partial<MoodEntry> = {
+      // Determine entry type based on what media is provided
+      let entryType: 'text' | 'image' | 'voice' = 'text';
+      let mediaUrl: string | null = null;
+
+      if (imageUri) {
+        entryType = 'image';
+        // TODO: Upload image to Supabase storage and get URL
+        // For now, we'll just store the local URI (won't work across devices)
+        mediaUrl = imageUri;
+      } else if (voiceUri) {
+        entryType = 'voice';
+        // TODO: Upload voice recording to Supabase storage and get URL
+        // For now, we'll just store the local URI (won't work across devices)
+        mediaUrl = voiceUri;
+      }
+
+      const entry: any = {
         user_id: user.id,
         mood_score: mood,
-        entry_type: 'text',
+        entry_type: entryType,
         text_content: text || null,
+        media_url: mediaUrl,
         synced: true,
       };
 
